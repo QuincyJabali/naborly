@@ -8,7 +8,7 @@ import AddItem from './components/AddItem';
 function App() {
   return (
     <div className="App">
-      <div className="container">
+      <div className="container-fluid">
         <BrowserRouter>
         <Routes>
           <Route path="/signup" element={<SignUp/> } />

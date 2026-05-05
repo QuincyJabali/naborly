@@ -8,83 +8,103 @@ const SignIn = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    const [loading, setLoading] = useState("");
+    const [loading, setLoading] = useState(false); // Changed to boolean for cleaner logic
     const navigator = useNavigate();
 
-      const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setError("")
-        setSuccess("")
-        setLoading("Please wait...")
+        // Reset states
+        setError("");
+        setSuccess("");
+        setLoading(true);
 
         try {
-            // Create form data
             const user_data = new FormData();
-
-            // add the email and password to user_data
             user_data.append("email", email);
             user_data.append("password", password);
 
-            // use axios to send data to server and get response
-            const response = await axios.post("https://quincyj.alwaysdata.net/api/signin", user_data)
-            console.log(response);
+            // POST to your Flask API
+            const response = await axios.post("https://quincyj.alwaysdata.net/api/signin", user_data);
+            
+            setLoading(false);
+
             if (response.data.user) {
-                setLoading("")
-                setSuccess(response.data.message)
+                // Save user details (user_id, username, etc.) to LocalStorage
                 localStorage.setItem("user", JSON.stringify(response.data.user));
-                navigator("/")
+                
+                setSuccess("Login successful! Redirecting...");
+                
+                // Small delay so the user can see the success message before redirecting
+                setTimeout(() => {
+                    navigator("/");
+                }, 1500);
+            } else {
+                // This catches the "Invalid credentials" message from Flask
+                setError(response.data.message || "Login failed");
             }
-            else {
-                setLoading("")
-                setError(response.data.message)
-            }
-        } catch (error) {
-            setLoading("")
-            setError(error.message)
-
+        } catch (err) {
+            setLoading(false);
+            // Catch network errors or 500 server errors
+            setError(err.response?.data?.message || "Server connection error. Please try again.");
         }
+    };
 
-    }
-    return(
+    return (
         <div>
-            <Navbar/>
+            <Navbar />
             <div className="row justify-content-center">
-                <div className="col-md-6 card shadow mt-5">
-                    <h2>Sign In</h2>
-                    <h5 className="text-warning">{loading}</h5>
-                    <h5 className="text-danger">{error}</h5>
-                    <h5 className="text-success">{success}</h5>
+                <div className="col-md-5 card shadow mt-5 p-4"> {/* Adjusted width for better UI */}
+                    <h2 className="text-center">Sign In</h2>
+                    
+                    {/* Visual Feedback Alerts */}
+                    {loading && <div className="alert alert-info">Please wait...</div>}
+                    {error && <div className="alert alert-danger">{error}</div>}
+                    {success && <div className="alert alert-success">{success}</div>}
 
                     <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                            <label className="form-label">Email Address</label>
+                            <input 
+                                type="email" 
+                                placeholder="name@gmail.com" 
+                                className="form-control" 
+                                value={email} 
+                                onChange={(e) => setEmail(e.target.value)} 
+                                required
+                            />
+                        </div>
 
-                       <input type="email" 
-                       placeholder="Enter Email" 
-                       className="form-control" 
-                       value={email} 
-                       onChange={(e) => setEmail(e.target.value)} 
-                       />
+                        <div className="mb-3">
+                            <label className="form-label">Password</label>
+                            <input 
+                                type="password" 
+                                placeholder="Enter Password" 
+                                className="form-control" 
+                                value={password} 
+                                onChange={(e) => setPassword(e.target.value)} 
+                                required
+                            />
+                        </div>
 
-                       <br />
-
-                       <input type="password" 
-                       placeholder="Enter Password" 
-                       className="form-control" 
-                       value={password} 
-                       onChange={(e) => setPassword(e.target.value)} 
-                       />
-
-                        <br />
-
-                        <button type="submit" className="btn btn-primary mb-3">Sign In</button>
+                        <button 
+                            type="submit" 
+                            className="btn btn-primary w-100 mb-3" 
+                            disabled={loading}
+                        >
+                            {loading ? "Signing In..." : "Sign In"}
+                        </button>
                         
-                        <br/>
-                        <Link to="/signup">Don't have an account? Sign Up</Link>
-                        <br/>   
+                        <div className="text-center">
+                            <Link to="/signup" className="text-decoration-none">
+                                Don't have an account? Sign Up
+                            </Link>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-    )
+    );
 }
+
 export default SignIn;
